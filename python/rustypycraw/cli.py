@@ -122,3 +122,33 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+def show_tx_info():
+    """Display TX blockchain information and resources"""
+    print("\n" + "=" * 60)
+    print("🦞 TX BLOCKCHAIN - Smart Tokens & Interoperability")
+    print("=" * 60)
+    print("\n📚 KEY RESOURCES:")
+    print("  • Main Docs: https://docs.tx.org/")
+    print("  • Smart Tokens: https://docs.tx.org/docs/next/overview/smart-tokens")
+    print("  • Bridge Docs: https://docs.tx.org/docs-bridge/overview")
+    print("  • Run a Node: https://docs.tx.org/docs/next/nodes-and-validators/run-full-node")
+    print("\n🔑 SMART TOKEN FEATURES:")
+    print("  • Mint/Burn controls")
+    print("  • Freezing & Whitelisting")
+    print("  • IBC compatible")
+    print("  • Clawback capability")
+    print("  • Extension contracts (CosmWasm)")
+    print("\n🌉 XRPL BRIDGE:")
+    print("  • Asset flow between XRPL and TX")
+    print("  • NFT migration support")
+    print("  • Relayer infrastructure")
+    print("\n🔗 More: https://tx.org/community | https://tx.org/projects")
+
+# Add to argument parser
+parser.add_argument("--tx-info", action="store_true", help="Show TX blockchain information")
+
+# In main
+if args.tx_info:
+    show_tx_info()
+    return

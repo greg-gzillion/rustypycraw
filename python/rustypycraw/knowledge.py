@@ -86,3 +86,28 @@ def search_references(query: str) -> list:
             results.append(f"[General] {name}: {url}")
     
     return results
+
+    "tx": {
+        "main_docs": "https://docs.tx.org/",
+        "general_overview": "https://docs.tx.org/docs/next/overview/general",
+        "smart_tokens": "https://docs.tx.org/docs/next/overview/smart-tokens",
+        "bridge_docs": "https://docs.tx.org/docs-bridge/overview",
+        "run_full_node": "https://docs.tx.org/docs/next/nodes-and-validators/run-full-node",
+        "community": "https://tx.org/community",
+        "ecosystem_projects": "https://tx.org/projects",
+        "team": "https://tx.org/tx-team",
+        "whitepaper": "https://docs.tx.org/docs/next/overview/general#technical-whitepaper",
+        "github": "https://github.com/tx-org",
+        "explorer": "https://explorer.tx.org/",
+    },
+
+    "tx_blockchain": {
+        "what_is_tx": "https://docs.tx.org/",
+        "smart_tokens_explained": "https://docs.tx.org/docs/next/overview/smart-tokens",
+        "token_flags": "https://docs.tx.org/docs/next/overview/smart-tokens#features",
+        "ibc_compatibility": "https://docs.tx.org/docs/next/overview/smart-tokens#ibc-compatibility",
+        "clawback_feature": "https://docs.tx.org/docs/next/overview/smart-tokens#clawback",
+        "extension_contracts": "https://docs.tx.org/docs/next/overview/smart-tokens#extension",
+        "xrpl_bridge": "https://docs.tx.org/docs-bridge/overview",
+        "validator_nodes": "https://docs.tx.org/docs/next/nodes-and-validators/run-full-node",
+    },
