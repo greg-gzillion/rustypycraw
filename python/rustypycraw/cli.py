@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-RustyPyCraw CLI - Hybrid code crawler
+RustyPyCraw CLI - Hybrid code crawler with shared memory
 """
 
 import argparse
 import sys
 from .crawler import RustyPyCraw
 from .knowledge import get_references, list_languages
+from .shared_memory import SharedMemory
 
 def show_references(language=None):
     """Display online references for a language"""
@@ -33,6 +34,48 @@ def show_all_references():
         for name, url in refs.items():
             print(f"   • {name}: {url}")
 
+def show_shared_memory_stats():
+    """Show shared memory statistics"""
+    memory = SharedMemory()
+    stats = memory.get_stats()
+    agents = memory.get_all_agents()
+    
+    print("\n📚 SHARED MEMORY STATISTICS")
+    print("=" * 50)
+    print(f"  Total memories: {stats['memories']}")
+    print(f"  Total conversations: {stats['conversations']}")
+    print(f"  Registered agents: {stats['agents']}")
+    
+    if agents:
+        print("\n🦞 REGISTERED AGENTS:")
+        for name, repo, caps in agents:
+            print(f"  • {name}")
+            print(f"    Repo: {repo}")
+            print(f"    Capabilities: {caps[:80]}...")
+    memory.close()
+
+def remember_memory(key, value):
+    """Store a memory in shared database"""
+    memory = SharedMemory()
+    memory.remember("rustypycraw", key, value)
+    print(f"✅ Memory stored: {key} = {value}")
+    memory.close()
+
+def recall_memory(key):
+    """Recall memories from shared database"""
+    memory = SharedMemory()
+    results = memory.recall(key)
+    
+    if results:
+        print(f"\n📖 Memories matching '{key}':")
+        print("=" * 50)
+        for agent, mem_key, value, tags in results:
+            print(f"\n🦞 {agent}: {mem_key}")
+            print(f"   {value[:200]}...")
+    else:
+        print(f"No memories found for '{key}'")
+    memory.close()
+
 def main():
     parser = argparse.ArgumentParser(description="RustyPyCraw - Hybrid code crawler")
     parser.add_argument("path", nargs="?", default=".", help="Path to crawl")
@@ -50,10 +93,13 @@ def main():
     parser.add_argument("--list-langs", action="store_true", help="List all languages with references")
     parser.add_argument("--summary", action="store_true", help="Show detailed summary")
     parser.add_argument("--all-docs", action="store_true", help="Show all documentation references")
+    parser.add_argument("--shared-stats", action="store_true", help="Show shared memory statistics")
+    parser.add_argument("--remember", nargs=2, metavar=('KEY', 'VALUE'), help="Store a memory in shared database")
+    parser.add_argument("--recall", help="Recall memories by key")
     
     args = parser.parse_args()
     
-    # Handle documentation commands first
+    # Handle documentation commands
     if args.all_docs:
         show_all_references()
         return
@@ -73,7 +119,20 @@ def main():
             print(name)
         return
     
-    # Initialize crawler
+    # Handle shared memory commands
+    if args.shared_stats:
+        show_shared_memory_stats()
+        return
+    
+    if args.remember:
+        remember_memory(args.remember[0], args.remember[1])
+        return
+    
+    if args.recall:
+        recall_memory(args.recall)
+        return
+    
+    # Initialize crawler for file operations
     crawler = RustyPyCraw(args.path)
     
     if args.stats:
@@ -86,19 +145,22 @@ def main():
             print(f"    {lang}: {count}")
         print(f"  Rust core: {'✅' if stats.get('rust_available') else '❌'}")
         print(f"  AI available: {'✅' if stats.get('ai_available') else '❌'}")
-        
-    elif args.summary:
+        return
+    
+    if args.summary:
         print(crawler.summary())
-        
-    elif args.search:
+        return
+    
+    if args.search:
         results = crawler.search(args.search)
         print(f"\n🔍 Found {len(results)} files containing '{args.search}':")
         for r in results[:20]:
             print(f"  {r}")
         if len(results) > 20:
             print(f"  ... and {len(results) - 20} more")
-            
-    elif args.grep:
+        return
+    
+    if args.grep:
         results = crawler.grep(args.grep, args.context)
         print(f"\n🔍 Found {len(results)} matches for '{args.grep}':")
         for r in results[:30]:
@@ -108,16 +170,18 @@ def main():
             print(f"  ➤ {r['content']}")
             for after in r['after'][:2]:
                 print(f"     {after}")
-                
-    elif args.pinch:
+        return
+    
+    if args.pinch:
         bugs = crawler.pinch()
         print(f"\n🦞 Found {len(bugs)} unnecessary .clone() calls:")
         for b in bugs[:30]:
             print(f"  📄 {b['file']}:{b['line']}")
             print(f"     ⚠️  {b['message']}")
             print(f"     💡 {b['suggestion']}")
-            
-    elif args.ask:
+        return
+    
+    if args.ask:
         from .models import ModelProvider
         provider = ModelProvider()
         
@@ -129,99 +193,9 @@ def main():
             result = provider.ask(args.ask)
         
         print(f"\n🤖 {result}\n")
-        
-    else:
-        parser.print_help()
+        return
+    
+    parser.print_help()
 
 if __name__ == "__main__":
     main()
-
-def query_all_agents(question: str):
-    """Query all registered agents for answers"""
-    from .shared_memory import SharedMemory
-    import subprocess
-    
-    memory = SharedMemory()
-    agents = memory.get_all_agents()
-    
-    print(f"\n🔍 Querying {len(agents)} agents: {question}\n")
-    print("=" * 50)
-    
-    for name, repo, caps in agents:
-        print(f"\n🦞 {name}:")
-        print(f"   Repo: {repo}")
-        print(f"   Capabilities: {caps}")
-        # In a real implementation, you'd call each agent's API
-        print("   (Agent query would go here)")
-        print("-" * 30)
-
-# Add to argument parser
-parser.add_argument("--query-agents", "-q", help="Query all agents for an answer")
-
-# In main
-if args.query_agents:
-    query_all_agents(args.query_agents)
-    return
-
-def show_shared_memory_stats():
-    """Show shared memory statistics"""
-    from .shared_memory import SharedMemory
-    memory = SharedMemory()
-    stats = memory.get_stats()
-    agents = memory.get_all_agents()
-    
-    print("\n📚 SHARED MEMORY STATISTICS")
-    print("=" * 50)
-    print(f"  Total memories: {stats['memories']}")
-    print(f"  Total conversations: {stats['conversations']}")
-    print(f"  Registered agents: {stats['agents']}")
-    
-    if agents:
-        print("\n🦞 REGISTERED AGENTS:")
-        for name, repo, caps in agents:
-            print(f"  • {name}")
-            print(f"    Repo: {repo}")
-            print(f"    Capabilities: {caps[:80]}...")
-    memory.close()
-
-def remember(agent: str, key: str, value: str):
-    """Store a memory in shared database"""
-    from .shared_memory import SharedMemory
-    memory = SharedMemory()
-    memory.remember(agent, key, value)
-    print(f"✅ Memory stored: {key}")
-    memory.close()
-
-def recall(key: str):
-    """Recall memories from shared database"""
-    from .shared_memory import SharedMemory
-    memory = SharedMemory()
-    results = memory.recall(key)
-    
-    if results:
-        print(f"\n📖 Memories matching '{key}':")
-        print("=" * 50)
-        for agent, mem_key, value, tags in results:
-            print(f"\n🦞 {agent}: {mem_key}")
-            print(f"   {value[:200]}...")
-    else:
-        print(f"No memories found for '{key}'")
-    memory.close()
-
-# Add to argument parser
-parser.add_argument("--shared-stats", action="store_true", help="Show shared memory statistics")
-parser.add_argument("--remember", nargs=2, metavar=('KEY', 'VALUE'), help="Store a memory in shared database")
-parser.add_argument("--recall", help="Recall memories by key")
-
-# In main
-if args.shared_stats:
-    show_shared_memory_stats()
-    return
-
-if args.remember:
-    remember("rustypycraw", args.remember[0], args.remember[1])
-    return
-
-if args.recall:
-    recall(args.recall)
-    return
