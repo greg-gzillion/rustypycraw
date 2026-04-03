@@ -158,3 +158,17 @@ class MemoryLoader:
                 break
         
         return '\n\n'.join(context[:3])
+
+def save_identity(self, identity_text: str):
+    """Save persistent identity (like SOUL.md)"""
+    path = os.path.expanduser("~/.rustypycraw/SOUL.md")
+    with open(path, 'w') as f:
+        f.write(identity_text)
+
+def load_identity(self) -> str:
+    """Load persistent identity across sessions"""
+    path = os.path.expanduser("~/.rustypycraw/SOUL.md")
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            return f.read()
+    return ""
