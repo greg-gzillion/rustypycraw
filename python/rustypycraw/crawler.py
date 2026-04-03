@@ -267,3 +267,13 @@ Rust core: {'✅' if stats.get('rust_available') else '❌'}
             counts[lang] = counts.get(lang, 0) + 1
         
         return counts
+
+# from .config import CONFIG_DIR
+# from .rules import load_project_rules
+# from .session import PersistentSession
+# from .harness import Harness
+
+def __init_with_harness__(self, root_path: str):
+    self.harness = Harness()
+    self.session = PersistentSession()
+    self.project_rules = load_project_rules(root_path)
