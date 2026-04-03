@@ -6,6 +6,22 @@ RustyPyCraw CLI - Hybrid code crawler
 import argparse
 import sys
 from .crawler import RustyPyCraw
+from .knowledge import get_references, list_languages
+
+def show_references(language=None):
+    """Display online references for a language"""
+    if language:
+        refs = get_references(language)
+        print(f"\n📚 References for {language.upper()}:")
+        print("-" * 40)
+        for name, url in refs.items():
+            print(f"  {name}: {url}")
+    else:
+        print("\n📚 Available Languages with References:")
+        print("-" * 40)
+        for lang in list_languages():
+            if lang != "general":
+                print(f"  - {lang.upper()}")
 
 def main():
     parser = argparse.ArgumentParser(description="RustyPyCraw - Hybrid code crawler")
@@ -16,10 +32,33 @@ def main():
     parser.add_argument("--context", "-c", type=int, default=2, help="Context lines for grep")
     parser.add_argument("--pinch", "-p", action="store_true", help="Find unnecessary .clone() calls")
     parser.add_argument("--ask", "-a", help="Ask AI about the codebase")
+    parser.add_argument("--groq", action="store_true", help="Use Groq API (fast)")
+    parser.add_argument("--ollama", action="store_true", help="Use Ollama (local)")
+    parser.add_argument("--model", "-m", help="Specify model to use")
+    parser.add_argument("--list-models", action="store_true", help="List all available models")
+    parser.add_argument("--docs", "-d", help="Show documentation references for a language")
+    parser.add_argument("--list-langs", action="store_true", help="List all languages with references")
     parser.add_argument("--summary", action="store_true", help="Show detailed summary")
     
     args = parser.parse_args()
     
+    # Handle documentation commands first
+    if args.list_langs:
+        show_references()
+        return
+    
+    if args.docs:
+        show_references(args.docs)
+        return
+    
+    if args.list_models:
+        from .models import ModelProvider
+        provider = ModelProvider()
+        for name in provider.list_models():
+            print(name)
+        return
+    
+    # Initialize crawler
     crawler = RustyPyCraw(args.path)
     
     if args.stats:
@@ -64,36 +103,22 @@ def main():
             print(f"     💡 {b['suggestion']}")
             
     elif args.ask:
-        print(f"\n🤖 {crawler.ask(args.ask)}\n")
+        from .models import ModelProvider
+        provider = ModelProvider()
+        
+        # Determine which provider to use
+        if args.groq:
+            result = provider.ask(args.ask, provider='groq', model=args.model)
+        elif args.ollama:
+            result = provider.ask(args.ask, provider='ollama', model=args.model or 'codellama:7b')
+        else:
+            # Auto-select
+            result = provider.ask(args.ask)
+        
+        print(f"\n🤖 {result}\n")
         
     else:
         parser.print_help()
 
 if __name__ == "__main__":
     main()
-
-def show_references(language=None):
-    """Display online references for a language"""
-    from .knowledge import get_references, list_languages
-    
-    if language:
-        refs = get_references(language)
-        print(f"\n📚 References for {language.upper()}:")
-        print("-" * 40)
-        for name, url in refs.items():
-            print(f"  {name}: {url}")
-    else:
-        print("\n📚 Available Languages with References:")
-        print("-" * 40)
-        for lang in list_languages():
-            print(f"  - {lang.upper()}")
-
-# Add to argument parser
-parser.add_argument("--docs", "-d", help="Show documentation references for a language")
-parser.add_argument("--list-langs", action="store_true", help="List all languages with references")
-
-# In main, add handlers
-if args.list_langs:
-    show_references()
-elif args.docs:
-    show_references(args.docs)
