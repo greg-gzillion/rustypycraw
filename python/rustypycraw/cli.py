@@ -199,3 +199,119 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+def show_memory_age(key):
+    """Show age of a memory"""
+    memory = SharedMemory()
+    result = memory.get_memory_age(key)
+    print(result)
+    memory.close()
+
+def cleanup_memories(days):
+    """Clean up old memories"""
+    memory = SharedMemory()
+    count = memory.cleanup_old_memories(days)
+    print(f"✅ Removed {count} old memories")
+    memory.close()
+
+def route_question(question):
+    """Find best agent for a question"""
+    memory = SharedMemory()
+    result = memory.route_question(question)
+    print(result)
+    memory.close()
+
+# Add to argument parser
+parser.add_argument("--memory-age", help="Show age of a memory")
+parser.add_argument("--cleanup", type=int, help="Clean up memories older than N days")
+parser.add_argument("--route", help="Find best agent for a question")
+
+# In main
+if args.memory_age:
+    show_memory_age(args.memory_age)
+    return
+
+if args.cleanup:
+    cleanup_memories(args.cleanup)
+    return
+
+if args.route:
+    route_question(args.route)
+    return
+
+def generate_contract(name: str, features: str):
+    """Generate a new CosmWasm contract"""
+    from .code_gen import CodeGenerator
+    feature_list = features.split(',') if features else []
+    contract = CodeGenerator.generate_contract(name, feature_list)
+    
+    filename = f"src/{name}.rs"
+    with open(filename, 'w') as f:
+        f.write(contract)
+    print(f"✅ Generated contract: {filename}")
+
+def fix_file(filepath: str):
+    """Auto-fix common issues in a file"""
+    from .auto_fix import AutoFix
+    
+    clones_fixed = AutoFix.fix_unnecessary_clones(filepath)
+    errors_fixed = AutoFix.add_error_handling(filepath)
+    
+    print(f"📝 Fixed {clones_fixed} unnecessary .clone() calls")
+    print(f"📝 Fixed {errors_fixed} error handling issues")
+
+# Add to argument parser
+parser.add_argument("--generate", "-g", help="Generate a new CosmWasm contract (name:features)")
+parser.add_argument("--fix", "-f", help="Auto-fix issues in a file")
+
+# In main
+if args.generate:
+    parts = args.generate.split(':')
+    name = parts[0]
+    features = parts[1] if len(parts) > 1 else ""
+    generate_contract(name, features)
+    return
+
+if args.fix:
+    fix_file(args.fix)
+    return
+
+def polyglot_generate(language: str, name: str, features: str = ""):
+    """Generate code in any supported language"""
+    from .polyglot import PolyglotGenerator
+    
+    feature_list = [f.strip() for f in features.split(',')] if features else []
+    code = PolyglotGenerator.generate(language, name, feature_list)
+    
+    ext = PolyglotGenerator.LANGUAGES.get(language.lower(), {}).get("ext", ".txt")
+    filename = f"{name.replace(' ', '_')}{ext}"
+    
+    with open(filename, 'w') as f:
+        f.write(code)
+    
+    print(f"✅ Generated {language} code: {filename}")
+    print(f"\n{code[:500]}...\n")
+
+def polyglot_list():
+    """List all supported languages"""
+    from .polyglot import PolyglotGenerator
+    print("\n🌍 Supported Languages for Code Generation:")
+    print("=" * 50)
+    for lang in PolyglotGenerator.list_languages():
+        print(f"  • {lang.upper()}")
+
+# Add to argument parser
+parser.add_argument("--polyglot", "-pg", nargs=2, metavar=('LANG', 'NAME'), help="Generate code in any language")
+parser.add_argument("--polyglot-features", "-pf", help="Comma-separated features for generation")
+parser.add_argument("--list-langs-code", action="store_true", help="List all languages for code generation")
+
+# In main
+if args.list_langs_code:
+    polyglot_list()
+    return
+
+if args.polyglot:
+    language, name = args.polyglot
+    features = args.polyglot_features or ""
+    polyglot_generate(language, name, features)
+    return
