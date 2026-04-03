@@ -23,6 +23,16 @@ def show_references(language=None):
             if lang != "general":
                 print(f"  - {lang.upper()}")
 
+def show_all_references():
+    """Display all available documentation references"""
+    from .knowledge import KNOWLEDGE_BASE
+    print("\n📚 ALL DOCUMENTATION REFERENCES")
+    print("=" * 50)
+    for category, refs in KNOWLEDGE_BASE.items():
+        print(f"\n🔹 {category.upper()}:")
+        for name, url in refs.items():
+            print(f"   • {name}: {url}")
+
 def main():
     parser = argparse.ArgumentParser(description="RustyPyCraw - Hybrid code crawler")
     parser.add_argument("path", nargs="?", default=".", help="Path to crawl")
@@ -39,10 +49,15 @@ def main():
     parser.add_argument("--docs", "-d", help="Show documentation references for a language")
     parser.add_argument("--list-langs", action="store_true", help="List all languages with references")
     parser.add_argument("--summary", action="store_true", help="Show detailed summary")
+    parser.add_argument("--all-docs", action="store_true", help="Show all documentation references")
     
     args = parser.parse_args()
     
     # Handle documentation commands first
+    if args.all_docs:
+        show_all_references()
+        return
+    
     if args.list_langs:
         show_references()
         return
@@ -106,13 +121,11 @@ def main():
         from .models import ModelProvider
         provider = ModelProvider()
         
-        # Determine which provider to use
         if args.groq:
             result = provider.ask(args.ask, provider='groq', model=args.model)
         elif args.ollama:
             result = provider.ask(args.ask, provider='ollama', model=args.model or 'codellama:7b')
         else:
-            # Auto-select
             result = provider.ask(args.ask)
         
         print(f"\n🤖 {result}\n")
@@ -122,33 +135,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-def show_tx_info():
-    """Display TX blockchain information and resources"""
-    print("\n" + "=" * 60)
-    print("🦞 TX BLOCKCHAIN - Smart Tokens & Interoperability")
-    print("=" * 60)
-    print("\n📚 KEY RESOURCES:")
-    print("  • Main Docs: https://docs.tx.org/")
-    print("  • Smart Tokens: https://docs.tx.org/docs/next/overview/smart-tokens")
-    print("  • Bridge Docs: https://docs.tx.org/docs-bridge/overview")
-    print("  • Run a Node: https://docs.tx.org/docs/next/nodes-and-validators/run-full-node")
-    print("\n🔑 SMART TOKEN FEATURES:")
-    print("  • Mint/Burn controls")
-    print("  • Freezing & Whitelisting")
-    print("  • IBC compatible")
-    print("  • Clawback capability")
-    print("  • Extension contracts (CosmWasm)")
-    print("\n🌉 XRPL BRIDGE:")
-    print("  • Asset flow between XRPL and TX")
-    print("  • NFT migration support")
-    print("  • Relayer infrastructure")
-    print("\n🔗 More: https://tx.org/community | https://tx.org/projects")
-
-# Add to argument parser
-parser.add_argument("--tx-info", action="store_true", help="Show TX blockchain information")
-
-# In main
-if args.tx_info:
-    show_tx_info()
-    return
