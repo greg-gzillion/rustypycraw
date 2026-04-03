@@ -135,3 +135,93 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+def query_all_agents(question: str):
+    """Query all registered agents for answers"""
+    from .shared_memory import SharedMemory
+    import subprocess
+    
+    memory = SharedMemory()
+    agents = memory.get_all_agents()
+    
+    print(f"\n🔍 Querying {len(agents)} agents: {question}\n")
+    print("=" * 50)
+    
+    for name, repo, caps in agents:
+        print(f"\n🦞 {name}:")
+        print(f"   Repo: {repo}")
+        print(f"   Capabilities: {caps}")
+        # In a real implementation, you'd call each agent's API
+        print("   (Agent query would go here)")
+        print("-" * 30)
+
+# Add to argument parser
+parser.add_argument("--query-agents", "-q", help="Query all agents for an answer")
+
+# In main
+if args.query_agents:
+    query_all_agents(args.query_agents)
+    return
+
+def show_shared_memory_stats():
+    """Show shared memory statistics"""
+    from .shared_memory import SharedMemory
+    memory = SharedMemory()
+    stats = memory.get_stats()
+    agents = memory.get_all_agents()
+    
+    print("\n📚 SHARED MEMORY STATISTICS")
+    print("=" * 50)
+    print(f"  Total memories: {stats['memories']}")
+    print(f"  Total conversations: {stats['conversations']}")
+    print(f"  Registered agents: {stats['agents']}")
+    
+    if agents:
+        print("\n🦞 REGISTERED AGENTS:")
+        for name, repo, caps in agents:
+            print(f"  • {name}")
+            print(f"    Repo: {repo}")
+            print(f"    Capabilities: {caps[:80]}...")
+    memory.close()
+
+def remember(agent: str, key: str, value: str):
+    """Store a memory in shared database"""
+    from .shared_memory import SharedMemory
+    memory = SharedMemory()
+    memory.remember(agent, key, value)
+    print(f"✅ Memory stored: {key}")
+    memory.close()
+
+def recall(key: str):
+    """Recall memories from shared database"""
+    from .shared_memory import SharedMemory
+    memory = SharedMemory()
+    results = memory.recall(key)
+    
+    if results:
+        print(f"\n📖 Memories matching '{key}':")
+        print("=" * 50)
+        for agent, mem_key, value, tags in results:
+            print(f"\n🦞 {agent}: {mem_key}")
+            print(f"   {value[:200]}...")
+    else:
+        print(f"No memories found for '{key}'")
+    memory.close()
+
+# Add to argument parser
+parser.add_argument("--shared-stats", action="store_true", help="Show shared memory statistics")
+parser.add_argument("--remember", nargs=2, metavar=('KEY', 'VALUE'), help="Store a memory in shared database")
+parser.add_argument("--recall", help="Recall memories by key")
+
+# In main
+if args.shared_stats:
+    show_shared_memory_stats()
+    return
+
+if args.remember:
+    remember("rustypycraw", args.remember[0], args.remember[1])
+    return
+
+if args.recall:
+    recall(args.recall)
+    return

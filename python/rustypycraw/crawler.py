@@ -277,3 +277,69 @@ def __init_with_harness__(self, root_path: str):
     self.harness = Harness()
     self.session = PersistentSession()
     self.project_rules = load_project_rules(root_path)
+
+from .shared_memory import SharedMemory
+
+class RustyPyCraw:
+    def __init__(self, root_path: str, use_ollama: bool = False):
+        # ... existing code ...
+        self.shared_memory = SharedMemory()
+        self.shared_memory.register_agent(
+            agent_id="rustypycraw",
+            name="RustyPyCraw",
+            repo="https://github.com/greg-gzillion/rustypycraw",
+            capabilities="hybrid code crawler, multi-model AI, Rust+Python"
+        )
+    
+    def ask_with_memory(self, question: str) -> str:
+        """Ask with access to shared memories"""
+        # Search shared memories first
+        memories = self.shared_memory.recall(question)
+        if memories:
+            context = "\n".join([f"[{m[0]}] {m[1]}: {m[2]}" for m in memories[:3]])
+            question = f"Context from other agents:\n{context}\n\n{question}"
+        
+        # Search past conversations
+        past = self.shared_memory.search_conversations(question)
+        if past:
+            context = "\n".join([f"[{p[0]}] Q: {p[1]}\n   A: {p[2][:100]}" for p in past[:2]])
+            question = f"Similar past conversations:\n{context}\n\n{question}"
+        
+        return self.ask(question)
+
+from .shared_memory import SharedMemory
+
+class RustyPyCraw:
+    def __init__(self, root_path: str, use_ollama: bool = False):
+        # ... existing code ...
+        self.shared_memory = SharedMemory()
+        self.shared_memory.register_agent(
+            agent_id="rustypycraw",
+            name="RustyPyCraw",
+            repo="https://github.com/greg-gzillion/rustypycraw",
+            capabilities="hybrid code crawler, multi-model AI, Rust+Python, parallel search, pinch mode"
+        )
+    
+    def ask_with_memory(self, question: str) -> str:
+        """Ask with access to shared memories from all agents"""
+        # Search shared memories first
+        memories = self.shared_memory.recall(question)
+        if memories:
+            context = "\n".join([f"[{m[0]}] {m[1]}: {m[2][:200]}" for m in memories[:3]])
+            enhanced_question = f"Context from other agents:\n{context}\n\n{question}"
+        else:
+            enhanced_question = question
+        
+        # Search past conversations
+        past = self.shared_memory.search_conversations(question)
+        if past:
+            context = "\n".join([f"[{p[0]}] Q: {p[1]}\n   A: {p[2][:100]}" for p in past[:2]])
+            enhanced_question = f"Similar past conversations:\n{context}\n\n{enhanced_question}"
+        
+        # Get answer
+        answer = self.ask(enhanced_question)
+        
+        # Log conversation
+        self.shared_memory.log_conversation("rustypycraw", question, answer)
+        
+        return answer
