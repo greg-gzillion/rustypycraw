@@ -131,3 +131,91 @@ if __name__ == "__main__":
     print("\nAvailable models:")
     for name, info in provider.list_models().items():
         print(f"  • {name} ({info['speed']})")
+
+    def assemble_prompt(self, question: str, context: str = "", mode: str = "standard") -> str:
+        """Assemble layered prompt like Claude Code system prompts"""
+        layers = []
+        
+        # Layer 1: Identity (always)
+        layers.append("You are RustyPyCraw, a hybrid code crawler for CosmWasm/PhoenixPME")
+        
+        # Layer 2: Security boundaries (always)
+        layers.append("NEVER suggest modifying code without user approval")
+        
+        # Layer 3: Mode-specific instructions
+        if mode == "code_review":
+            layers.append("Focus: security vulnerabilities, gas optimization, CosmWasm patterns")
+        elif mode == "debug":
+            layers.append("Focus: error handling, unwrap() usage, clone() optimization")
+        elif mode == "explain":
+            layers.append("Focus: clarity, examples, references to VISION.md")
+        elif mode == "audit":
+            layers.append("Focus: access control, economic attacks, oracle manipulation")
+        elif mode == "optimize":
+            layers.append("Focus: gas usage, storage patterns, unnecessary allocations")
+        
+        # Layer 4: Context (dynamic)
+        if context:
+            layers.append(f"Context:\n{context}")
+        
+        # Layer 5: Question
+        layers.append(f"Question: {question}")
+        
+        return "\n\n".join(layers)
+
+    def ask_with_mode(self, question: str, mode: str = "auto", context: str = "") -> str:
+        """Ask with specialized agent mode (auto-detects if mode='auto')"""
+        
+        # Auto-detect mode from question
+        if mode == "auto":
+            q_lower = question.lower()
+            if any(w in q_lower for w in ['fix', 'bug', 'error', 'issue']):
+                mode = "debug"
+            elif any(w in q_lower for w in ['review', 'security', 'audit', 'vulnerab']):
+                mode = "audit"
+            elif any(w in q_lower for w in ['explain', 'what is', 'how does', 'describe']):
+                mode = "explain"
+            elif any(w in q_lower for w in ['optimize', 'gas', 'clone', 'performance']):
+                mode = "optimize"
+            elif any(w in q_lower for w in ['review', 'check']):
+                mode = "code_review"
+            else:
+                mode = "standard"
+        
+        # Build the layered prompt
+        prompt = self.assemble_prompt(question, context, mode)
+        
+        # Use the selected provider
+        if 'groq' in self.providers:
+            return self._ask_groq(prompt)
+        elif 'ollama' in self.providers:
+            return self._ask_ollama(prompt)
+        else:
+            return "No AI provider available"
+# Add system prompt assembler
+
+    def assemble_system_prompt(self, mode: str = "standard") -> str:
+        """Assemble dynamic system prompt like Pattern 01"""
+        layers = []
+        layers.append("You are RustyPyCraw, a hybrid code crawler for CosmWasm/PhoenixPME")
+        layers.append("")
+        layers.append("## Security Boundaries")
+        layers.append("- NEVER modify code without explicit user approval")
+        layers.append("- Read operations are always safe")
+        layers.append("- Report security vulnerabilities immediately")
+        layers.append("")
+        layers.append("## Mode Instructions")
+        if mode == "code_review":
+            layers.append("Focus: security vulnerabilities, gas optimization, CosmWasm patterns")
+        elif mode == "audit":
+            layers.append("Focus: access control, economic attacks, oracle manipulation")
+        elif mode == "explain":
+            layers.append("Focus: clarity, examples, references to VISION.md")
+        else:
+            layers.append("Focus: balanced, helpful responses")
+        layers.append("")
+        layers.append("## CosmWasm Specific")
+        layers.append("- Entry points: instantiate, execute, query, migrate")
+        layers.append("- Storage: Item, Map, Bucket, SnapshotMap")
+        layers.append("- Reply pattern for submessage handling")
+        return "\\n".join(layers)
