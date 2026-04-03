@@ -64,3 +64,20 @@ class PermissionClassifier:
             PermissionLevel.BLOCK: f"❌ BLOCKED: '{command}' - Potentially dangerous operation"
         }
         return explanations.get(level, f"Unknown: {command}")
+
+    # C++ specific dangerous patterns
+    CPP_DANGEROUS = [
+        r'delete\s+\*',
+        r'free\(',
+        r'malloc\(',
+        r'new\s+\w+',
+        r'#define\s+',
+    ]
+    
+    @classmethod
+    def classify_cpp(cls, code_line: str) -> Tuple[PermissionLevel, str]:
+        """Classify C++ code for memory safety issues"""
+        for pattern in cls.CPP_DANGEROUS:
+            if re.search(pattern, code_line):
+                return (PermissionLevel.REQUIRE_APPROVAL, f"Memory operation: {pattern}")
+        return (PermissionLevel.AUTO_APPROVE, "Safe C++ operation")

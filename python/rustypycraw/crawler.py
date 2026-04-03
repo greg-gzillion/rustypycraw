@@ -219,3 +219,51 @@ Rust files: {rust_files}
 AI backend: {stats.get('ai_type', 'None')}
 Rust core: {'✅' if stats.get('rust_available') else '❌'}
 """
+
+    def analyze_cpp(self, filepath: str) -> str:
+        """C++ specific analysis"""
+        return self.ask(f"Analyze this C++ code for memory leaks, RAII violations, and undefined behavior:\n{self._read_file(filepath)}")
+    
+    def analyze_typescript(self, filepath: str) -> str:
+        """TypeScript specific analysis"""
+        return self.ask(f"Analyze this TypeScript code for type safety, null handling, and best practices:\n{self._read_file(filepath)}")
+    
+    def analyze_vb(self, filepath: str) -> str:
+        """Visual Basic specific analysis"""
+        return self.ask(f"Analyze this Visual Basic code for compatibility, error handling, and modern patterns:\n{self._read_file(filepath)}")
+    
+    def _read_file(self, filepath: str) -> str:
+        """Helper to read file safely"""
+        try:
+            with open(filepath, 'r') as f:
+                return f.read()[:3000]
+        except:
+            return "Error reading file"
+
+    def languages_detailed(self) -> Dict:
+        """Get detailed language breakdown including C++, TypeScript, VB"""
+        if not self.rust:
+            return {}
+        
+        files = self.rust.get_stats()
+        lang_map = {
+            'rs': 'Rust',
+            'cpp': 'C++', 'cc': 'C++', 'cxx': 'C++', 'h': 'C++', 'hpp': 'C++',
+            'ts': 'TypeScript', 'tsx': 'TypeScript',
+            'js': 'JavaScript', 'jsx': 'JavaScript',
+            'py': 'Python',
+            'vb': 'Visual Basic', 'vbs': 'Visual Basic',
+            'sol': 'Solidity',
+            'go': 'Go',
+            'md': 'Markdown',
+            'toml': 'TOML',
+            'json': 'JSON',
+        }
+        
+        counts = {}
+        for f in files:
+            ext = f.path.split('.')[-1] if '.' in f.path else 'unknown'
+            lang = lang_map.get(ext, 'Other')
+            counts[lang] = counts.get(lang, 0) + 1
+        
+        return counts

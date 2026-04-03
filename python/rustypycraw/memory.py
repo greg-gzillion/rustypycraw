@@ -103,3 +103,58 @@ class MemoryLoader:
 
         with open(memory_file, "w") as f:
             json.dump(data, f, indent=2)
+
+    def _load_code_context_multi_lang(self, query: str) -> str:
+        """Load code context from multiple languages"""
+        keywords = query.lower().split()[:3]
+        context = []
+        
+        # Define language extensions
+        languages = {
+            'rust': ['.rs'],
+            'cpp': ['.cpp', '.cc', '.cxx', '.h', '.hpp'],
+            'typescript': ['.ts', '.tsx'],
+            'javascript': ['.js', '.jsx'],
+            'python': ['.py'],
+            'visual_basic': ['.vb', '.vbs'],
+            'solidity': ['.sol'],
+            'go': ['.go'],
+        }
+        
+        # Detect which language the query is about
+        target_langs = []
+        for lang, extensions in languages.items():
+            if lang in query.lower():
+                target_langs = extensions
+                break
+        
+        if not target_langs:
+            target_langs = ['.rs', '.ts', '.cpp', '.vb']  # Default search
+        
+        for kw in keywords:
+            for ext in target_langs:
+                for filepath in self.root_path.rglob(f"*{ext}"):
+                    if filepath.stat().st_size > 50000:
+                        continue
+                    try:
+                        with open(filepath, 'r') as f:
+                            content = f.read()
+                            if kw in content.lower():
+                                lines = content.split('\n')
+                                for i, line in enumerate(lines):
+                                    if kw in line.lower():
+                                        start = max(0, i-2)
+                                        end = min(len(lines), i+3)
+                                        excerpt = '\n'.join(lines[start:end])
+                                        context.append(f"File: {filepath.name} (line {i+1})\n{excerpt}")
+                                        break
+                                if len(context) >= 3:
+                                    break
+                    except:
+                        pass
+                if len(context) >= 3:
+                    break
+            if len(context) >= 3:
+                break
+        
+        return '\n\n'.join(context[:3])
