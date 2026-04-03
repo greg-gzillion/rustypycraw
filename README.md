@@ -34,3 +34,16 @@ cd ..
 ## 📝 License
 
 MIT
+
+## 📚 Documentation References
+
+```bash
+# List all languages with references
+./rustypycraw --list-langs
+
+# Show references for specific language
+./rustypycraw --docs rust
+./rustypycraw --docs cosmwasm
+./rustypycraw --docs cpp
+./rustypycraw --docs typescript
+```

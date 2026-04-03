@@ -71,3 +71,29 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+def show_references(language=None):
+    """Display online references for a language"""
+    from .knowledge import get_references, list_languages
+    
+    if language:
+        refs = get_references(language)
+        print(f"\n📚 References for {language.upper()}:")
+        print("-" * 40)
+        for name, url in refs.items():
+            print(f"  {name}: {url}")
+    else:
+        print("\n📚 Available Languages with References:")
+        print("-" * 40)
+        for lang in list_languages():
+            print(f"  - {lang.upper()}")
+
+# Add to argument parser
+parser.add_argument("--docs", "-d", help="Show documentation references for a language")
+parser.add_argument("--list-langs", action="store_true", help="List all languages with references")
+
+# In main, add handlers
+if args.list_langs:
+    show_references()
+elif args.docs:
+    show_references(args.docs)
