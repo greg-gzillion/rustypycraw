@@ -31,10 +31,6 @@ cd ..
 | codellama:7b | Ollama | 30-60 sec | Rust debugging |
 | llama3.2:3b | Ollama | 15-30 sec | Fast local |
 
-## 📝 License
-
-MIT
-
 ## 📚 Documentation References
 
 ```bash
@@ -47,3 +43,21 @@ MIT
 ./rustypycraw --docs cpp
 ./rustypycraw --docs typescript
 ```
+
+## ⚠️ Disclaimer
+
+This software is a **clean-room reimplementation** based on:
+- Publicly observable behavior of Claude Code
+- Independent research and community analysis
+- Documentation and behavioral observation
+
+**No proprietary source code from Anthropic is included.**
+
+This project is for **educational and research purposes**. 
+The author does not claim ownership of any underlying ideas, patterns, or functionality.
+
+Not affiliated with Anthropic. Use at your own risk.
+
+## Terms
+
+Free to use, modify, and distribute. No warranty. No ownership claimed.
