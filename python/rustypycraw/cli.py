@@ -1,141 +1,129 @@
 #!/usr/bin/env python3
 """
-RustyPyCraw CLI - Hybrid code crawler with shared memory
+RustyPyCraw CLI - Hybrid code crawler with shared memory and polyglot support
 """
 
 import argparse
 import sys
-from .crawler import RustyPyCraw
-from .knowledge import get_references, list_languages
-from .shared_memory import SharedMemory
+import os
 
-def show_references(language=None):
-    """Display online references for a language"""
-    if language:
-        refs = get_references(language)
-        print(f"\n📚 References for {language.upper()}:")
-        print("-" * 40)
-        for name, url in refs.items():
-            print(f"  {name}: {url}")
-    else:
+def main():
+    parser = argparse.ArgumentParser(description="RustyPyCraw - Hybrid Code Crawler")
+    
+    # Basic commands
+    parser.add_argument("path", nargs="?", default=".", help="Path to crawl")
+    parser.add_argument("--stats", action="store_true", help="Show codebase statistics")
+    parser.add_argument("--search", "-s", help="Search for pattern in files")
+    parser.add_argument("--ask", "-a", help="Ask AI about the codebase")
+    parser.add_argument("--groq", action="store_true", help="Use Groq API (fast)")
+    parser.add_argument("--ollama", action="store_true", help="Use Ollama (local)")
+    
+    # Knowledge base commands
+    parser.add_argument("--docs", "-d", help="Show documentation references for a language")
+    parser.add_argument("--list-langs", action="store_true", help="List all languages with references")
+    parser.add_argument("--all-docs", action="store_true", help="Show all documentation references")
+    
+    # Shared memory commands
+    parser.add_argument("--shared-stats", action="store_true", help="Show shared memory statistics")
+    parser.add_argument("--remember", nargs=2, metavar=('KEY', 'VALUE'), help="Store a memory")
+    parser.add_argument("--recall", help="Recall memories by key")
+    
+    # Polyglot code generation
+    parser.add_argument("--polyglot", "-pg", nargs=2, metavar=('LANG', 'NAME'), help="Generate code in any language")
+    parser.add_argument("--list-langs-code", action="store_true", help="List all languages for code generation")
+    
+    args = parser.parse_args()
+    
+    # Handle knowledge base commands
+    if args.all_docs:
+        from .knowledge import KNOWLEDGE_BASE
+        print("\n📚 ALL DOCUMENTATION REFERENCES")
+        print("=" * 50)
+        for category, refs in KNOWLEDGE_BASE.items():
+            print(f"\n🔹 {category.upper()}:")
+            for name, url in refs.items():
+                print(f"   • {name}: {url}")
+        return
+    
+    if args.list_langs:
+        from .knowledge import list_languages
         print("\n📚 Available Languages with References:")
         print("-" * 40)
         for lang in list_languages():
             if lang != "general":
                 print(f"  - {lang.upper()}")
-
-def show_all_references():
-    """Display all available documentation references"""
-    from .knowledge import KNOWLEDGE_BASE
-    print("\n📚 ALL DOCUMENTATION REFERENCES")
-    print("=" * 50)
-    for category, refs in KNOWLEDGE_BASE.items():
-        print(f"\n🔹 {category.upper()}:")
-        for name, url in refs.items():
-            print(f"   • {name}: {url}")
-
-def show_shared_memory_stats():
-    """Show shared memory statistics"""
-    memory = SharedMemory()
-    stats = memory.get_stats()
-    agents = memory.get_all_agents()
-    
-    print("\n📚 SHARED MEMORY STATISTICS")
-    print("=" * 50)
-    print(f"  Total memories: {stats['memories']}")
-    print(f"  Total conversations: {stats['conversations']}")
-    print(f"  Registered agents: {stats['agents']}")
-    
-    if agents:
-        print("\n🦞 REGISTERED AGENTS:")
-        for name, repo, caps in agents:
-            print(f"  • {name}")
-            print(f"    Repo: {repo}")
-            print(f"    Capabilities: {caps[:80]}...")
-    memory.close()
-
-def remember_memory(key, value):
-    """Store a memory in shared database"""
-    memory = SharedMemory()
-    memory.remember("rustypycraw", key, value)
-    print(f"✅ Memory stored: {key} = {value}")
-    memory.close()
-
-def recall_memory(key):
-    """Recall memories from shared database"""
-    memory = SharedMemory()
-    results = memory.recall(key)
-    
-    if results:
-        print(f"\n📖 Memories matching '{key}':")
-        print("=" * 50)
-        for agent, mem_key, value, tags in results:
-            print(f"\n🦞 {agent}: {mem_key}")
-            print(f"   {value[:200]}...")
-    else:
-        print(f"No memories found for '{key}'")
-    memory.close()
-
-def main():
-    parser = argparse.ArgumentParser(description="RustyPyCraw - Hybrid code crawler")
-    parser.add_argument("path", nargs="?", default=".", help="Path to crawl")
-    parser.add_argument("--stats", action="store_true", help="Show codebase statistics")
-    parser.add_argument("--search", "-s", help="Search for pattern in files")
-    parser.add_argument("--grep", "-g", help="Search with context lines")
-    parser.add_argument("--context", "-c", type=int, default=2, help="Context lines for grep")
-    parser.add_argument("--pinch", "-p", action="store_true", help="Find unnecessary .clone() calls")
-    parser.add_argument("--ask", "-a", help="Ask AI about the codebase")
-    parser.add_argument("--groq", action="store_true", help="Use Groq API (fast)")
-    parser.add_argument("--ollama", action="store_true", help="Use Ollama (local)")
-    parser.add_argument("--model", "-m", help="Specify model to use")
-    parser.add_argument("--list-models", action="store_true", help="List all available models")
-    parser.add_argument("--docs", "-d", help="Show documentation references for a language")
-    parser.add_argument("--list-langs", action="store_true", help="List all languages with references")
-    parser.add_argument("--summary", action="store_true", help="Show detailed summary")
-    parser.add_argument("--all-docs", action="store_true", help="Show all documentation references")
-    parser.add_argument("--shared-stats", action="store_true", help="Show shared memory statistics")
-    parser.add_argument("--remember", nargs=2, metavar=('KEY', 'VALUE'), help="Store a memory in shared database")
-    parser.add_argument("--recall", help="Recall memories by key")
-    
-    args = parser.parse_args()
-    
-    # Handle documentation commands
-    if args.all_docs:
-        show_all_references()
-        return
-    
-    if args.list_langs:
-        show_references()
         return
     
     if args.docs:
-        show_references(args.docs)
-        return
-    
-    if args.list_models:
-        from .models import ModelProvider
-        provider = ModelProvider()
-        for name in provider.list_models():
-            print(name)
+        from .knowledge import get_references
+        refs = get_references(args.docs)
+        print(f"\n📚 References for {args.docs.upper()}:")
+        print("-" * 40)
+        for name, url in refs.items():
+            print(f"  {name}: {url}")
         return
     
     # Handle shared memory commands
     if args.shared_stats:
-        show_shared_memory_stats()
+        from .shared_memory import SharedMemory
+        memory = SharedMemory()
+        stats = memory.get_stats()
+        print("\n📚 SHARED MEMORY STATISTICS")
+        print("=" * 50)
+        print(f"  Total memories: {stats['memories']}")
+        print(f"  Total conversations: {stats['conversations']}")
+        print(f"  Registered agents: {stats['agents']}")
+        memory.close()
         return
     
     if args.remember:
-        remember_memory(args.remember[0], args.remember[1])
+        from .shared_memory import SharedMemory
+        memory = SharedMemory()
+        memory.remember("rustypycraw", args.remember[0], args.remember[1])
+        print(f"✅ Memory stored: {args.remember[0]} = {args.remember[1]}")
+        memory.close()
         return
     
     if args.recall:
-        recall_memory(args.recall)
+        from .shared_memory import SharedMemory
+        memory = SharedMemory()
+        results = memory.recall(args.recall)
+        if results:
+            print(f"\n📖 Memories matching '{args.recall}':")
+            print("=" * 50)
+            for agent, key, value, tags in results:
+                print(f"\n🦞 {agent}: {key}")
+                print(f"   {value[:200]}...")
+        else:
+            print(f"No memories found for '{args.recall}'")
+        memory.close()
         return
     
-    # Initialize crawler for file operations
-    crawler = RustyPyCraw(args.path)
+    # Handle polyglot commands
+    if args.list_langs_code:
+        from .polyglot import PolyglotGenerator
+        print("\n🌍 Supported Languages for Code Generation:")
+        print("=" * 50)
+        for lang in PolyglotGenerator.list_languages():
+            print(f"  • {lang.upper()}")
+        return
     
+    if args.polyglot:
+        from .polyglot import PolyglotGenerator
+        language, name = args.polyglot
+        code = PolyglotGenerator.generate(language, name)
+        ext = PolyglotGenerator.LANGUAGES.get(language.lower(), {}).get("ext", ".txt")
+        filename = f"{name.replace(' ', '_')}{ext}"
+        with open(filename, 'w') as f:
+            f.write(code)
+        print(f"✅ Generated {language} code: {filename}")
+        print(f"\n{code[:500]}...\n")
+        return
+    
+    # Handle stats
     if args.stats:
+        from .crawler import RustyPyCraw
+        crawler = RustyPyCraw(args.path)
         stats = crawler.stats()
         print("\n📊 RustyPyCraw Statistics")
         print(f"  Path: {stats.get('root_path', 'Unknown')}")
@@ -143,175 +131,28 @@ def main():
         print(f"  Languages:")
         for lang, count in stats.get('languages', {}).items():
             print(f"    {lang}: {count}")
-        print(f"  Rust core: {'✅' if stats.get('rust_available') else '❌'}")
-        print(f"  AI available: {'✅' if stats.get('ai_available') else '❌'}")
         return
     
-    if args.summary:
-        print(crawler.summary())
-        return
-    
+    # Handle search
     if args.search:
+        from .crawler import RustyPyCraw
+        crawler = RustyPyCraw(args.path)
         results = crawler.search(args.search)
         print(f"\n🔍 Found {len(results)} files containing '{args.search}':")
         for r in results[:20]:
             print(f"  {r}")
-        if len(results) > 20:
-            print(f"  ... and {len(results) - 20} more")
         return
     
-    if args.grep:
-        results = crawler.grep(args.grep, args.context)
-        print(f"\n🔍 Found {len(results)} matches for '{args.grep}':")
-        for r in results[:30]:
-            print(f"\n  📄 {r['file']}:{r['line']}")
-            for before in r['before'][-2:]:
-                print(f"     {before}")
-            print(f"  ➤ {r['content']}")
-            for after in r['after'][:2]:
-                print(f"     {after}")
-        return
-    
-    if args.pinch:
-        bugs = crawler.pinch()
-        print(f"\n🦞 Found {len(bugs)} unnecessary .clone() calls:")
-        for b in bugs[:30]:
-            print(f"  📄 {b['file']}:{b['line']}")
-            print(f"     ⚠️  {b['message']}")
-            print(f"     💡 {b['suggestion']}")
-        return
-    
+    # Handle ask
     if args.ask:
-        from .models import ModelProvider
-        provider = ModelProvider()
-        
-        if args.groq:
-            result = provider.ask(args.ask, provider='groq', model=args.model)
-        elif args.ollama:
-            result = provider.ask(args.ask, provider='ollama', model=args.model or 'codellama:7b')
-        else:
-            result = provider.ask(args.ask)
-        
-        print(f"\n🤖 {result}\n")
+        from .crawler import RustyPyCraw
+        crawler = RustyPyCraw(args.path, use_ollama=args.ollama)
+        answer = crawler.ask(args.ask)
+        print(f"\n🤖 {answer}\n")
         return
     
+    # Default: show help
     parser.print_help()
 
 if __name__ == "__main__":
     main()
-
-def show_memory_age(key):
-    """Show age of a memory"""
-    memory = SharedMemory()
-    result = memory.get_memory_age(key)
-    print(result)
-    memory.close()
-
-def cleanup_memories(days):
-    """Clean up old memories"""
-    memory = SharedMemory()
-    count = memory.cleanup_old_memories(days)
-    print(f"✅ Removed {count} old memories")
-    memory.close()
-
-def route_question(question):
-    """Find best agent for a question"""
-    memory = SharedMemory()
-    result = memory.route_question(question)
-    print(result)
-    memory.close()
-
-# Add to argument parser
-parser.add_argument("--memory-age", help="Show age of a memory")
-parser.add_argument("--cleanup", type=int, help="Clean up memories older than N days")
-parser.add_argument("--route", help="Find best agent for a question")
-
-# In main
-if args.memory_age:
-    show_memory_age(args.memory_age)
-    return
-
-if args.cleanup:
-    cleanup_memories(args.cleanup)
-    return
-
-if args.route:
-    route_question(args.route)
-    return
-
-def generate_contract(name: str, features: str):
-    """Generate a new CosmWasm contract"""
-    from .code_gen import CodeGenerator
-    feature_list = features.split(',') if features else []
-    contract = CodeGenerator.generate_contract(name, feature_list)
-    
-    filename = f"src/{name}.rs"
-    with open(filename, 'w') as f:
-        f.write(contract)
-    print(f"✅ Generated contract: {filename}")
-
-def fix_file(filepath: str):
-    """Auto-fix common issues in a file"""
-    from .auto_fix import AutoFix
-    
-    clones_fixed = AutoFix.fix_unnecessary_clones(filepath)
-    errors_fixed = AutoFix.add_error_handling(filepath)
-    
-    print(f"📝 Fixed {clones_fixed} unnecessary .clone() calls")
-    print(f"📝 Fixed {errors_fixed} error handling issues")
-
-# Add to argument parser
-parser.add_argument("--generate", "-g", help="Generate a new CosmWasm contract (name:features)")
-parser.add_argument("--fix", "-f", help="Auto-fix issues in a file")
-
-# In main
-if args.generate:
-    parts = args.generate.split(':')
-    name = parts[0]
-    features = parts[1] if len(parts) > 1 else ""
-    generate_contract(name, features)
-    return
-
-if args.fix:
-    fix_file(args.fix)
-    return
-
-def polyglot_generate(language: str, name: str, features: str = ""):
-    """Generate code in any supported language"""
-    from .polyglot import PolyglotGenerator
-    
-    feature_list = [f.strip() for f in features.split(',')] if features else []
-    code = PolyglotGenerator.generate(language, name, feature_list)
-    
-    ext = PolyglotGenerator.LANGUAGES.get(language.lower(), {}).get("ext", ".txt")
-    filename = f"{name.replace(' ', '_')}{ext}"
-    
-    with open(filename, 'w') as f:
-        f.write(code)
-    
-    print(f"✅ Generated {language} code: {filename}")
-    print(f"\n{code[:500]}...\n")
-
-def polyglot_list():
-    """List all supported languages"""
-    from .polyglot import PolyglotGenerator
-    print("\n🌍 Supported Languages for Code Generation:")
-    print("=" * 50)
-    for lang in PolyglotGenerator.list_languages():
-        print(f"  • {lang.upper()}")
-
-# Add to argument parser
-parser.add_argument("--polyglot", "-pg", nargs=2, metavar=('LANG', 'NAME'), help="Generate code in any language")
-parser.add_argument("--polyglot-features", "-pf", help="Comma-separated features for generation")
-parser.add_argument("--list-langs-code", action="store_true", help="List all languages for code generation")
-
-# In main
-if args.list_langs_code:
-    polyglot_list()
-    return
-
-if args.polyglot:
-    language, name = args.polyglot
-    features = args.polyglot_features or ""
-    polyglot_generate(language, name, features)
-    return
